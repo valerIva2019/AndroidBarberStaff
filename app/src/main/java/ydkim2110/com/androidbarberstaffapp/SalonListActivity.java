@@ -7,11 +7,15 @@ import androidx.recyclerview.widget.RecyclerView;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import dmax.dialog.SpotsDialog;
+import io.paperdb.Paper;
 import ydkim2110.com.androidbarberstaffapp.Adapter.MySalonAdapter;
 import ydkim2110.com.androidbarberstaffapp.Common.Common;
 import ydkim2110.com.androidbarberstaffapp.Common.SpacesItemDecoration;
 import ydkim2110.com.androidbarberstaffapp.Interface.IBranchLoadListener;
+import ydkim2110.com.androidbarberstaffapp.Interface.IGetBarberListener;
 import ydkim2110.com.androidbarberstaffapp.Interface.IOnLoadCountSalon;
+import ydkim2110.com.androidbarberstaffapp.Interface.IUserLoginRememberListener;
+import ydkim2110.com.androidbarberstaffapp.Model.Barber;
 import ydkim2110.com.androidbarberstaffapp.Model.Salon;
 
 import android.app.AlertDialog;
@@ -26,11 +30,12 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class SalonListActivity extends AppCompatActivity implements IOnLoadCountSalon, IBranchLoadListener {
+public class SalonListActivity extends AppCompatActivity implements IOnLoadCountSalon, IBranchLoadListener, IGetBarberListener, IUserLoginRememberListener {
 
     private static final String TAG = "SalonListActivity";
 
@@ -123,7 +128,7 @@ public class SalonListActivity extends AppCompatActivity implements IOnLoadCount
     public void onBranchLoadSuccess(List<Salon> branchList) {
         Log.d(TAG, "onBranchLoadSuccess: called!!");
 
-        MySalonAdapter mSalonAdapter = new MySalonAdapter(this, branchList);
+        MySalonAdapter mSalonAdapter = new MySalonAdapter(this, branchList, this, this);
         recycler_salon.setAdapter(mSalonAdapter);
 
         mDialog.dismiss();
@@ -135,5 +140,24 @@ public class SalonListActivity extends AppCompatActivity implements IOnLoadCount
 
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
         mDialog.dismiss();
+    }
+
+    @Override
+    public void onGetBarberSuccess(Barber barber) {
+        Log.d(TAG, "onGetBarberSuccess: called!!");
+
+        Common.currentBarber = barber;
+        Paper.book().write(Common.BARBER_KEY, new Gson().toJson(barber));
+    }
+
+    @Override
+    public void onUserLoginSuccess(String user) {
+        Log.d(TAG, "onUserLoginSuccess: called!!");
+
+        // Save User
+        Paper.init(this);
+        Paper.book().write(Common.LOGGED_KEY, user);
+        Paper.book().write(Common.STATE_KEY, Common.state_name);
+        Paper.book().write(Common.SALON_KEY, new Gson().toJson(Common.selected_salon));
     }
 }

@@ -16,6 +16,7 @@ import android.widget.Toast;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 
@@ -30,7 +31,10 @@ import dmax.dialog.SpotsDialog;
 import ydkim2110.com.androidbarberstaffapp.Common.Common;
 import ydkim2110.com.androidbarberstaffapp.Common.CustomLoginDialog;
 import ydkim2110.com.androidbarberstaffapp.Interface.IDialogClickListener;
+import ydkim2110.com.androidbarberstaffapp.Interface.IGetBarberListener;
 import ydkim2110.com.androidbarberstaffapp.Interface.IRecyclerItemSelectedListener;
+import ydkim2110.com.androidbarberstaffapp.Interface.IUserLoginRememberListener;
+import ydkim2110.com.androidbarberstaffapp.Model.Barber;
 import ydkim2110.com.androidbarberstaffapp.Model.Salon;
 import ydkim2110.com.androidbarberstaffapp.R;
 import ydkim2110.com.androidbarberstaffapp.StaffHomeActivity;
@@ -43,13 +47,18 @@ public class MySalonAdapter extends RecyclerView.Adapter<MySalonAdapter.MyViewHo
     Context mContext;
     List<Salon> salonList;
     List<CardView> cardViewList;
-    LocalBroadcastManager mLocalBroadcastManager;
 
-    public MySalonAdapter(Context context, List<Salon> salonList) {
-        mContext = context;
+    IUserLoginRememberListener mIUserLoginRememberListener;
+    IGetBarberListener mIGetBarberListener;
+
+
+    public MySalonAdapter(Context context, List<Salon> salonList, IUserLoginRememberListener iUserLoginRememberListener, IGetBarberListener iGetBarberListener) {
+        this.mContext = context;
         this.salonList = salonList;
         cardViewList = new ArrayList<>();
-        mLocalBroadcastManager = LocalBroadcastManager.getInstance(context);
+        this.mIUserLoginRememberListener = iUserLoginRememberListener;
+        this.mIGetBarberListener = iGetBarberListener;
+
     }
 
     int lastPosition = -1;
@@ -78,7 +87,7 @@ public class MySalonAdapter extends RecyclerView.Adapter<MySalonAdapter.MyViewHo
             @Override
             public void onItemSelected(View view, int position) {
 
-                Common.selectedSalon = salonList.get(position);
+                Common.selected_salon = salonList.get(position);
                 showLoginDialog();
             }
         });
@@ -127,7 +136,7 @@ public class MySalonAdapter extends RecyclerView.Adapter<MySalonAdapter.MyViewHo
                 .collection("AllSalon")
                 .document(Common.state_name)
                 .collection("Branch")
-                .document(Common.selectedSalon.getSalonId())
+                .document(Common.selected_salon.getSalonId())
                 .collection("Barber")
                 .whereEqualTo("username", userName)
                 .whereEqualTo("password", password)
@@ -149,6 +158,17 @@ public class MySalonAdapter extends RecyclerView.Adapter<MySalonAdapter.MyViewHo
                                 dialogInterface.dismiss();
 
                                 loading.dismiss();
+
+                                mIUserLoginRememberListener.onUserLoginSuccess(userName);
+
+                                Barber barber = new Barber();
+                                for (DocumentSnapshot barberSnapshot : task.getResult()) {
+                                    barber = barberSnapshot.toObject(Barber.class);
+                                    barber.setBarberId(barberSnapshot.getId());
+                                }
+
+                                mIGetBarberListener.onGetBarberSuccess(barber);
+
 
                                 // We will navigate Staff Home and clear all previous activity
                                 Intent staffHome = new Intent(mContext, StaffHomeActivity.class);

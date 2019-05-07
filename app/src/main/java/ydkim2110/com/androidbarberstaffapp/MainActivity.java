@@ -7,13 +7,19 @@ import androidx.recyclerview.widget.RecyclerView;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import dmax.dialog.SpotsDialog;
+import io.paperdb.Paper;
 import ydkim2110.com.androidbarberstaffapp.Adapter.MyStateAdapter;
+import ydkim2110.com.androidbarberstaffapp.Common.Common;
 import ydkim2110.com.androidbarberstaffapp.Common.SpacesItemDecoration;
 import ydkim2110.com.androidbarberstaffapp.Interface.IOnAllStateLoadListener;
+import ydkim2110.com.androidbarberstaffapp.Model.Barber;
 import ydkim2110.com.androidbarberstaffapp.Model.City;
+import ydkim2110.com.androidbarberstaffapp.Model.Salon;
 
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -24,6 +30,8 @@ import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,16 +53,37 @@ public class MainActivity extends AppCompatActivity implements IOnAllStateLoadLi
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        Log.d(TAG, "onCreate: started!!");
 
-        ButterKnife.bind(this);
+        Paper.init(this);
+        String user = Paper.book().read(Common.LOGGED_KEY);
+        if (TextUtils.isEmpty(user)) { // IF user not login before
+            setContentView(R.layout.activity_main);
+            Log.d(TAG, "onCreate: started!!");
 
-        initView();
+            ButterKnife.bind(this);
 
-        init();
+            initView();
 
-        loadAllStateFromFirestore();
+            init();
+
+            loadAllStateFromFirestore();
+        } else { // If User already login
+            Gson gson = new Gson();
+            Common.state_name = Paper.book().read(Common.STATE_KEY);
+            Common.selected_salon = gson.fromJson(Paper.book().read(Common.SALON_KEY, ""),
+                    new TypeToken<Salon>(){}.getType());
+
+            Common.currentBarber = gson.fromJson(Paper.book().read(Common.BARBER_KEY, ""),
+                    new TypeToken<Barber>(){}.getType());
+
+            Intent intent = new Intent(this, StaffHomeActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            finish();
+        }
+
+
     }
 
     private void loadAllStateFromFirestore() {
