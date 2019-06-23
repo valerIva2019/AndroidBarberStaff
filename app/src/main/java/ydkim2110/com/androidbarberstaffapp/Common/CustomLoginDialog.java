@@ -3,6 +3,7 @@ package ydkim2110.com.androidbarberstaffapp.Common;
 import android.app.Dialog;
 import android.content.Context;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -18,6 +19,8 @@ import ydkim2110.com.androidbarberstaffapp.R;
 
 public class CustomLoginDialog {
 
+    private static final String TAG = CustomLoginDialog.class.getSimpleName();
+
     @BindView(R.id.txt_title)
     TextView txt_title;
     @BindView(R.id.edt_user)
@@ -29,7 +32,6 @@ public class CustomLoginDialog {
     @BindView(R.id.btn_cancel)
     Button btn_cancel;
 
-
     public static CustomLoginDialog mDialog;
     public IDialogClickListener mIDialogClickListener;
 
@@ -40,11 +42,10 @@ public class CustomLoginDialog {
         return mDialog;
     }
 
-    public void showLoginDialog(String title,
-                                String positiveText,
-                                String negativeText,
-                                Context context,
-                                IDialogClickListener iDialogClickListener) {
+    public void showLoginDialog(String title, String positiveText, String negativeText,
+                                Context context, IDialogClickListener iDialogClickListener) {
+        Log.d(TAG, "showLoginDialog: called!!");
+
         this.mIDialogClickListener = iDialogClickListener;
 
         Dialog dialog = new Dialog(context);

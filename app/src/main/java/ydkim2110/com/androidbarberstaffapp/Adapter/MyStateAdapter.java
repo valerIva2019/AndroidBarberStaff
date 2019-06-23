@@ -24,10 +24,10 @@ import ydkim2110.com.androidbarberstaffapp.SalonListActivity;
 
 public class MyStateAdapter extends RecyclerView.Adapter<MyStateAdapter.MyViewHolder> {
 
-    private static final String TAG = "MyStateAdapter";
+    private static final String TAG = MyStateAdapter.class.getSimpleName();
 
-    Context mContext;
-    List<City> mCityList;
+    private Context mContext;
+    private List<City> mCityList;
 
     public MyStateAdapter(Context context, List<City> cityList) {
         mContext = context;
@@ -81,7 +81,7 @@ public class MyStateAdapter extends RecyclerView.Adapter<MyStateAdapter.MyViewHo
         @BindView(R.id.txt_state_name)
         TextView txt_state_name;
 
-        IRecyclerItemSelectedListener mIRecyclerItemSelectedListener;
+        private IRecyclerItemSelectedListener mIRecyclerItemSelectedListener;
 
         public void setIRecyclerItemSelectedListener(IRecyclerItemSelectedListener IRecyclerItemSelectedListener) {
             mIRecyclerItemSelectedListener = IRecyclerItemSelectedListener;

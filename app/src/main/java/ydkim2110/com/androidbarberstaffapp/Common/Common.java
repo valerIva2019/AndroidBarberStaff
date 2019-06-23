@@ -8,6 +8,7 @@ import ydkim2110.com.androidbarberstaffapp.Model.Barber;
 import ydkim2110.com.androidbarberstaffapp.Model.Salon;
 
 public class Common {
+
     public static final Object DISABLE_TAG = "DISABLE";
     public static final int TIME_SLOT_TOTAL = 20;
     public static final String LOGGED_KEY = "LOGGED_KEY";

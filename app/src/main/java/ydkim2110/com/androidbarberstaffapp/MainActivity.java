@@ -38,17 +38,15 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements IOnAllStateLoadListener {
 
-    private static final String TAG = "MainActivity";
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     @BindView(R.id.recycler_state)
     RecyclerView recycler_state;
 
-    CollectionReference allSalonCollection;
-
-    IOnAllStateLoadListener mIOnAllStateLoadListener;
-
-    MyStateAdapter mAdapter;
-    AlertDialog mDialog;
+    private CollectionReference allSalonCollection;
+    private IOnAllStateLoadListener mIOnAllStateLoadListener;
+    private MyStateAdapter mAdapter;
+    private AlertDialog mDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,16 +54,14 @@ public class MainActivity extends AppCompatActivity implements IOnAllStateLoadLi
 
         Paper.init(this);
         String user = Paper.book().read(Common.LOGGED_KEY);
-        if (TextUtils.isEmpty(user)) { // IF user not login before
+        // IF user not login before
+        if (TextUtils.isEmpty(user)) {
             setContentView(R.layout.activity_main);
             Log.d(TAG, "onCreate: started!!");
-
             ButterKnife.bind(this);
 
             initView();
-
             init();
-
             loadAllStateFromFirestore();
         } else { // If User already login
             Gson gson = new Gson();
@@ -113,9 +109,15 @@ public class MainActivity extends AppCompatActivity implements IOnAllStateLoadLi
                 });
     }
 
+    private void initView() {
+        Log.d(TAG, "initView: called!!");
+        recycler_state.setHasFixedSize(true);
+        recycler_state.setLayoutManager(new GridLayoutManager(this, 2));
+        recycler_state.addItemDecoration(new SpacesItemDecoration(8));
+    }
+
     private void init() {
         Log.d(TAG, "init: called!!");
-
         allSalonCollection = FirebaseFirestore.getInstance().collection("AllSalon");
         mIOnAllStateLoadListener = this;
         mDialog = new SpotsDialog.Builder()
@@ -124,28 +126,17 @@ public class MainActivity extends AppCompatActivity implements IOnAllStateLoadLi
                 .build();
     }
 
-    private void initView() {
-        Log.d(TAG, "initView: called!!");
-
-        recycler_state.setHasFixedSize(true);
-        recycler_state.setLayoutManager(new GridLayoutManager(this, 2));
-        recycler_state.addItemDecoration(new SpacesItemDecoration(8));
-    }
-
     @Override
     public void onAllStateLoadSuccess(List<City> cityList) {
         Log.d(TAG, "onAllStateLoadSuccess: called!!");
-
         mAdapter = new MyStateAdapter(this, cityList);
         recycler_state.setAdapter(mAdapter);
-
         mDialog.dismiss();
     }
 
     @Override
     public void onAllStateFailed(String message) {
         Log.d(TAG, "onAllStateFailed: called!!");
-
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
         mDialog.dismiss();
     }

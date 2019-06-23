@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import dmax.dialog.SpotsDialog;
@@ -21,6 +22,7 @@ import ydkim2110.com.androidbarberstaffapp.Model.Salon;
 import android.app.AlertDialog;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -37,17 +39,19 @@ import java.util.List;
 
 public class SalonListActivity extends AppCompatActivity implements IOnLoadCountSalon, IBranchLoadListener, IGetBarberListener, IUserLoginRememberListener {
 
-    private static final String TAG = "SalonListActivity";
+    private static final String TAG = SalonListActivity.class.getSimpleName();
 
     @BindView(R.id.txt_salon_count)
     TextView txt_salon_count;
     @BindView(R.id.recycler_salon)
     RecyclerView recycler_salon;
+    @BindView(R.id.no_item)
+    TextView no_item;
 
     IOnLoadCountSalon mIOnLoadCountSalon;
     IBranchLoadListener mIBranchLoadListener;
 
-    AlertDialog mDialog;
+    private AlertDialog mDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,8 +68,26 @@ public class SalonListActivity extends AppCompatActivity implements IOnLoadCount
         loadSalonBaseOnCity(Common.state_name);
     }
 
+
+    private void initView() {
+        Log.d(TAG, "initView: called!!");
+        recycler_salon.setHasFixedSize(true);
+        recycler_salon.setLayoutManager(new GridLayoutManager(this, 2));
+        recycler_salon.addItemDecoration(new SpacesItemDecoration(8));
+    }
+
+    private void init() {
+        Log.d(TAG, "init: called!!");
+        mDialog = new SpotsDialog.Builder().setContext(this).setCancelable(false).build();
+
+        mIOnLoadCountSalon = this;
+        mIBranchLoadListener = this;
+    }
+
     private void loadSalonBaseOnCity(String name) {
         Log.d(TAG, "loadSalonBaseOnCity: called!!");
+
+        mDialog.show();
 
         FirebaseFirestore.getInstance()
                 .collection("AllSalon")
@@ -95,41 +117,24 @@ public class SalonListActivity extends AppCompatActivity implements IOnLoadCount
                 });
     }
 
-    private void init() {
-        Log.d(TAG, "init: called!!");
-
-        mDialog = new SpotsDialog.Builder()
-                .setContext(this)
-                .setCancelable(false)
-                .build();
-
-        mIOnLoadCountSalon = this;
-        mIBranchLoadListener = this;
-    }
-
-    private void initView() {
-        Log.d(TAG, "initView: called!!");
-
-        recycler_salon.setHasFixedSize(true);
-        recycler_salon.setLayoutManager(new GridLayoutManager(this, 2));
-        recycler_salon.addItemDecoration(new SpacesItemDecoration(8));
-    }
-
     @Override
     public void onLoadCountSalonSuccess(int count) {
         Log.d(TAG, "onLoadCountSalonSuccess: called!!");
-
-        txt_salon_count.setText(new StringBuilder("All Salon (")
-                .append(count)
-                .append(")"));
+        txt_salon_count.setText(new StringBuilder("All Salon (").append(count).append(")"));
     }
 
     @Override
     public void onBranchLoadSuccess(List<Salon> branchList) {
         Log.d(TAG, "onBranchLoadSuccess: called!!");
-
-        MySalonAdapter mSalonAdapter = new MySalonAdapter(this, branchList, this, this);
-        recycler_salon.setAdapter(mSalonAdapter);
+        if (branchList.size() == 0) {
+            no_item.setVisibility(View.VISIBLE);
+            recycler_salon.setVisibility(View.GONE);
+        } else {
+            no_item.setVisibility(View.GONE);
+            recycler_salon.setVisibility(View.VISIBLE);
+            MySalonAdapter mSalonAdapter = new MySalonAdapter(this, branchList, this, this);
+            recycler_salon.setAdapter(mSalonAdapter);
+        }
 
         mDialog.dismiss();
     }
@@ -137,7 +142,6 @@ public class SalonListActivity extends AppCompatActivity implements IOnLoadCount
     @Override
     public void onBranchLoadFailed(String message) {
         Log.d(TAG, "onBranchLoadFailed: called!!");
-
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
         mDialog.dismiss();
     }
@@ -145,7 +149,6 @@ public class SalonListActivity extends AppCompatActivity implements IOnLoadCount
     @Override
     public void onGetBarberSuccess(Barber barber) {
         Log.d(TAG, "onGetBarberSuccess: called!!");
-
         Common.currentBarber = barber;
         Paper.book().write(Common.BARBER_KEY, new Gson().toJson(barber));
     }
@@ -153,7 +156,6 @@ public class SalonListActivity extends AppCompatActivity implements IOnLoadCount
     @Override
     public void onUserLoginSuccess(String user) {
         Log.d(TAG, "onUserLoginSuccess: called!!");
-
         // Save User
         Paper.init(this);
         Paper.book().write(Common.LOGGED_KEY, user);

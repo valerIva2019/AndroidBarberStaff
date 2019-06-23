@@ -42,15 +42,14 @@ import ydkim2110.com.androidbarberstaffapp.StaffHomeActivity;
 
 public class MySalonAdapter extends RecyclerView.Adapter<MySalonAdapter.MyViewHolder> implements IDialogClickListener {
 
-    private static final String TAG = "MySalonAdapter";
+    private static final String TAG = MySalonAdapter.class.getSimpleName();
 
-    Context mContext;
-    List<Salon> salonList;
-    List<CardView> cardViewList;
+    private Context mContext;
+    private List<Salon> salonList;
+    private List<CardView> cardViewList;
 
     IUserLoginRememberListener mIUserLoginRememberListener;
     IGetBarberListener mIGetBarberListener;
-
 
     public MySalonAdapter(Context context, List<Salon> salonList, IUserLoginRememberListener iUserLoginRememberListener, IGetBarberListener iGetBarberListener) {
         this.mContext = context;
@@ -97,11 +96,8 @@ public class MySalonAdapter extends RecyclerView.Adapter<MySalonAdapter.MyViewHo
         Log.d(TAG, "showLoginDialog: called!!");
 
         CustomLoginDialog.getInstance()
-                .showLoginDialog("STAFF LOGIN",
-                        "LOGIN",
-                        "CANCLE",
-                        mContext,
-                        this);
+                .showLoginDialog("STAFF LOGIN","LOGIN", "CANCEL",
+                        mContext,this);
     }
 
     private void setAnimation(View itemView, int position) {
@@ -145,8 +141,7 @@ public class MySalonAdapter extends RecyclerView.Adapter<MySalonAdapter.MyViewHo
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-                        Toast.makeText(mContext, e.getMessage(),
-                                Toast.LENGTH_SHORT).show();
+                        Toast.makeText(mContext, e.getMessage(), Toast.LENGTH_SHORT).show();
                         loading.dismiss();
                     }
                 })
@@ -169,14 +164,13 @@ public class MySalonAdapter extends RecyclerView.Adapter<MySalonAdapter.MyViewHo
 
                                 mIGetBarberListener.onGetBarberSuccess(barber);
 
-
                                 // We will navigate Staff Home and clear all previous activity
                                 Intent staffHome = new Intent(mContext, StaffHomeActivity.class);
                                 staffHome.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
                                 staffHome.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                 mContext.startActivity(staffHome);
-
-                            } else {
+                            }
+                            else {
                                 loading.dismiss();
                                 Toast.makeText(mContext, "Wrong username / password or wrong salon",
                                         Toast.LENGTH_SHORT).show();
@@ -194,8 +188,9 @@ public class MySalonAdapter extends RecyclerView.Adapter<MySalonAdapter.MyViewHo
     }
 
     public class MyViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        TextView txt_salon_name, txt_salon_address;
-        CardView card_salon;
+        private TextView txt_salon_name;
+        private TextView txt_salon_address;
+        private CardView card_salon;
 
         IRecyclerItemSelectedListener iRecyclerItemSelectedListener;
 

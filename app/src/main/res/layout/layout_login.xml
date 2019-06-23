@@ -35,8 +35,8 @@
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/edt_password"
-            android:layout_margin="8dp"
             android:hint="Staff password"
+            android:layout_margin="8dp"
             android:inputType="textPassword"
             android:fontFamily="@font/bellerose"
             android:layout_width="match_parent"
