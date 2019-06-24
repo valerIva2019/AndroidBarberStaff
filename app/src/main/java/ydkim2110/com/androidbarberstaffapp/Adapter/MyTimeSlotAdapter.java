@@ -21,10 +21,10 @@ import ydkim2110.com.androidbarberstaffapp.R;
 
 public class MyTimeSlotAdapter extends RecyclerView.Adapter<MyTimeSlotAdapter.MyViewHolder> {
 
-    Context mContext;
-    List<TimeSlot> mTimeSlotList;
-    List<CardView> mCardViewList;
-    LocalBroadcastManager mLocalBroadcastManager;
+    private Context mContext;
+    private List<TimeSlot> mTimeSlotList;
+    private List<CardView> mCardViewList;
+    private LocalBroadcastManager mLocalBroadcastManager;
 
     public MyTimeSlotAdapter(Context context) {
         mContext = context;
@@ -54,7 +54,7 @@ public class MyTimeSlotAdapter extends RecyclerView.Adapter<MyTimeSlotAdapter.My
         holder.txt_time_slot.setText(new StringBuilder(Common.convertTimeSlotToString(position)).toString());
         if (mTimeSlotList.size() == 0) { // If all position is availabe, just show list
             holder.card_time_slot.setCardBackgroundColor(mContext.getResources().getColor(android.R.color.white));
-            holder.txt_time_slot_description.setText("Available!");
+            holder.txt_time_slot_description.setText("Available");
             holder.txt_time_slot_description.setTextColor(mContext.getResources().getColor(android.R.color.black));
             holder.txt_time_slot.setTextColor(mContext.getResources().getColor(android.R.color.black));
         } else { // If have position is full (booked)
@@ -68,7 +68,7 @@ public class MyTimeSlotAdapter extends RecyclerView.Adapter<MyTimeSlotAdapter.My
                     holder.card_time_slot.setEnabled(false);
                     holder.card_time_slot.setCardBackgroundColor(mContext.getResources().getColor(android.R.color.darker_gray));
 
-                    holder.txt_time_slot_description.setText("Full!");
+                    holder.txt_time_slot_description.setText("Full");
                     holder.txt_time_slot_description.setTextColor(mContext.getResources().getColor(android.R.color.black));
                     holder.txt_time_slot.setTextColor(mContext.getResources().getColor(android.R.color.black));
                 }

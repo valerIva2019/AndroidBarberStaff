@@ -55,10 +55,9 @@ public class StaffHomeActivity extends AppCompatActivity implements ITimeSlotLoa
 
     private static final String TAG = "StaffHomeActivity";
 
-    TextView txt_barber_name;
-
     @BindView(R.id.activity_main)
     DrawerLayout mDrawerLayout;
+
     @BindView(R.id.navigation_view)
     NavigationView mNavigationView;
 
@@ -73,7 +72,8 @@ public class StaffHomeActivity extends AppCompatActivity implements ITimeSlotLoa
     @BindView(R.id.calendarView)
     HorizontalCalendarView calendarView;
 
-    TextView txt_notification_badge;
+    private TextView txt_notification_badge;
+    private TextView txt_barber_name;
 
     CollectionReference notificationCollection;
     CollectionReference currentBookDateCollection;
@@ -104,8 +104,7 @@ public class StaffHomeActivity extends AppCompatActivity implements ITimeSlotLoa
         getMenuInflater().inflate(R.menu.staff_home_menu, menu);
         MenuItem menuItem = menu.findItem(R.id.action_new_notification);
 
-        txt_notification_badge = menuItem.getActionView()
-                .findViewById(R.id.notification_badge);
+        txt_notification_badge = menuItem.getActionView().findViewById(R.id.notification_badge);
 
         loadNotification();
 
@@ -119,6 +118,19 @@ public class StaffHomeActivity extends AppCompatActivity implements ITimeSlotLoa
         return super.onCreateOptionsMenu(menu);
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (mActionBarDrawerToggle.onOptionsItemSelected(item)) {
+            return true;
+        } else if (item.getItemId() == R.id.action_new_notification) {
+            startActivity(new Intent(StaffHomeActivity.this, NotificationActivity.class));
+            txt_notification_badge.setText("");
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+    
     private void loadNotification() {
         Log.d(TAG, "loadNotification: called!!");
 
@@ -140,17 +152,8 @@ public class StaffHomeActivity extends AppCompatActivity implements ITimeSlotLoa
                 });
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (mActionBarDrawerToggle.onOptionsItemSelected(item)) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
     private void init() {
         Log.d(TAG, "init: called!!");
-
         mITimeSlotLoadListener = this;
         mINotificationCountListener = this;
         initNotificationRealtimeUpdate();
@@ -166,7 +169,7 @@ public class StaffHomeActivity extends AppCompatActivity implements ITimeSlotLoa
 
         mDrawerLayout.addDrawerListener(mActionBarDrawerToggle);
         mActionBarDrawerToggle.syncState();
-        //getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         mNavigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
             @Override
@@ -221,39 +224,9 @@ public class StaffHomeActivity extends AppCompatActivity implements ITimeSlotLoa
         });
     }
 
-    private void logOut() {
-        Log.d(TAG, "logOut: called!!");
-
-        new AlertDialog.Builder(this)
-                .setMessage("Are you sure you want to exit?")
-                .setCancelable(false)
-                .setPositiveButton("YES", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        // Just delete all remember key and start MainActivity
-                        Paper.init(StaffHomeActivity.this);
-                        Paper.book().delete(Common.STATE_KEY);
-                        Paper.book().delete(Common.BARBER_KEY);
-                        Paper.book().delete(Common.SALON_KEY);
-                        Paper.book().delete(Common.LOGGED_KEY);
-
-                        Intent mainIntent = new Intent(StaffHomeActivity.this, MainActivity.class);
-                        mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                        mainIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(mainIntent);
-                        finish();
-                    }
-                })
-                .setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                })
-                .show();
-    }
-
     private void loadAvailableTimeSlotOfBarber(String barberId, String bookDate) {
+        Log.d(TAG, "loadAvailableTimeSlotOfBarber: called!!");
+
         mDialog.show();
 
         barberDoc.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
@@ -315,6 +288,7 @@ public class StaffHomeActivity extends AppCompatActivity implements ITimeSlotLoa
         // Get current date
         Calendar date = Calendar.getInstance();
         date.add(Calendar.DATE,0);
+
         bookingEvent = new EventListener<QuerySnapshot>() {
             @Override
             public void onEvent(@Nullable QuerySnapshot queryDocumentSnapshots, @Nullable FirebaseFirestoreException e) {
@@ -350,6 +324,7 @@ public class StaffHomeActivity extends AppCompatActivity implements ITimeSlotLoa
             }
         };
 
+        // Only listen and count all notification unread
         notificationListener = notificationCollection.whereEqualTo("read", false)
                 .addSnapshotListener(notificationEvent);
     }
@@ -358,8 +333,6 @@ public class StaffHomeActivity extends AppCompatActivity implements ITimeSlotLoa
     public void onBackPressed() {
         new AlertDialog.Builder(this)
                 .setMessage("Are you sure you want to exit?")
-
-                
                 .setCancelable(false)
                 .setPositiveButton("YES", new DialogInterface.OnClickListener() {
                     @Override
@@ -377,20 +350,49 @@ public class StaffHomeActivity extends AppCompatActivity implements ITimeSlotLoa
                 .show();
     }
 
+    private void logOut() {
+        Log.d(TAG, "logOut: called!!");
+
+        new AlertDialog.Builder(this)
+                .setMessage("Are you sure you want to exit?")
+                .setCancelable(false)
+                .setPositiveButton("YES", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // Just delete all remember key and start MainActivity
+                        Paper.init(StaffHomeActivity.this);
+                        Paper.book().delete(Common.STATE_KEY);
+                        Paper.book().delete(Common.BARBER_KEY);
+                        Paper.book().delete(Common.SALON_KEY);
+                        Paper.book().delete(Common.LOGGED_KEY);
+
+                        Intent mainIntent = new Intent(StaffHomeActivity.this, MainActivity.class);
+                        mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        mainIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(mainIntent);
+                        finish();
+                    }
+                })
+                .setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
+                .show();
+    }
+
     @Override
     public void onTimeSlotLoadSuccess(List<TimeSlot> timeSlotList) {
         Log.d(TAG, "onTimeSlotLoadSuccess: called!!");
-
         MyTimeSlotAdapter adapter = new MyTimeSlotAdapter(this, timeSlotList);
         recycler_time_slot.setAdapter(adapter);
-
         mDialog.dismiss();
     }
 
     @Override
     public void onTimeSlotLoadFailed(String message) {
         Log.d(TAG, "onTimeSlotLoadFailed: called!!");
-
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
         mDialog.dismiss();
     }
@@ -398,25 +400,23 @@ public class StaffHomeActivity extends AppCompatActivity implements ITimeSlotLoa
     @Override
     public void onTimeSlotLoadEmpty() {
         Log.d(TAG, "onTimeSlotLoadEmpty: called!!");
-
         MyTimeSlotAdapter adapter = new MyTimeSlotAdapter(this);
         recycler_time_slot.setAdapter(adapter);
-
         mDialog.dismiss();
     }
 
     @Override
     public void onNotificationCountSuccess(int count) {
-        Log.d(TAG, "onNotificationCountSuccess: called!! ");
-        Log.d(TAG, "onNotificationCountSuccess: count : " + count);
-
+        Log.d(TAG, "onNotificationCountSuccess: called!!");
         if (count == 0) {
             txt_notification_badge.setVisibility(View.INVISIBLE);
-        } else {
+        }
+        else {
             txt_notification_badge.setVisibility(View.VISIBLE);
             if (count <= 9) {
                 txt_notification_badge.setText(String.valueOf(count));
-            } else {
+            }
+            else {
                 txt_notification_badge.setText("9+");
             }
         }

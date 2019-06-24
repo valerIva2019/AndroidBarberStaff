@@ -48,8 +48,15 @@ public class MySalonAdapter extends RecyclerView.Adapter<MySalonAdapter.MyViewHo
     private List<Salon> salonList;
     private List<CardView> cardViewList;
 
+    // This interface will tell us when user logged success, and we will write this user to memory by paper, in MainActivity
+    // We just check variable by KEY, if KEY available, that mean next time user no need to login again
     IUserLoginRememberListener mIUserLoginRememberListener;
+    // This interface will return us an User object(Barber) from Firebase Store
+    // We will user Gson to serialize this object to String and save it
+    // Because we need Barber ID to get all time slot
     IGetBarberListener mIGetBarberListener;
+
+    int lastPosition = -1;
 
     public MySalonAdapter(Context context, List<Salon> salonList, IUserLoginRememberListener iUserLoginRememberListener, IGetBarberListener iGetBarberListener) {
         this.mContext = context;
@@ -57,17 +64,13 @@ public class MySalonAdapter extends RecyclerView.Adapter<MySalonAdapter.MyViewHo
         cardViewList = new ArrayList<>();
         this.mIUserLoginRememberListener = iUserLoginRememberListener;
         this.mIGetBarberListener = iGetBarberListener;
-
     }
-
-    int lastPosition = -1;
 
     @NonNull
     @Override
     public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(mContext)
                 .inflate(R.layout.layout_salon, parent, false);
-
         return new MyViewHolder(view);
     }
 
@@ -156,6 +159,7 @@ public class MySalonAdapter extends RecyclerView.Adapter<MySalonAdapter.MyViewHo
 
                                 mIUserLoginRememberListener.onUserLoginSuccess(userName);
 
+                                // Create Barber
                                 Barber barber = new Barber();
                                 for (DocumentSnapshot barberSnapshot : task.getResult()) {
                                     barber = barberSnapshot.toObject(Barber.class);

@@ -26,10 +26,13 @@ import android.widget.Toast;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
+import com.google.api.LogDescriptor;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -52,9 +55,28 @@ public class MainActivity extends AppCompatActivity implements IOnAllStateLoadLi
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        FirebaseInstanceId.getInstance()
+                .getInstanceId()
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Toast.makeText(MainActivity.this, ""+e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<InstanceIdResult> task) {
+                        if (task.isSuccessful()) {
+                            Common.updateToken(MainActivity.this, task.getResult().getToken());
+                            Log.d(TAG, "onComplete: TOKEN: "+task.getResult().getToken());
+                        }
+                    }
+                });
+
         Paper.init(this);
         String user = Paper.book().read(Common.LOGGED_KEY);
-        // IF user not login before
+
+        // If user not login before
         if (TextUtils.isEmpty(user)) {
             setContentView(R.layout.activity_main);
             Log.d(TAG, "onCreate: started!!");
@@ -63,12 +85,12 @@ public class MainActivity extends AppCompatActivity implements IOnAllStateLoadLi
             initView();
             init();
             loadAllStateFromFirestore();
-        } else { // If User already login
+        }
+        else { // If User already login
             Gson gson = new Gson();
             Common.state_name = Paper.book().read(Common.STATE_KEY);
             Common.selected_salon = gson.fromJson(Paper.book().read(Common.SALON_KEY, ""),
                     new TypeToken<Salon>(){}.getType());
-
             Common.currentBarber = gson.fromJson(Paper.book().read(Common.BARBER_KEY, ""),
                     new TypeToken<Barber>(){}.getType());
 

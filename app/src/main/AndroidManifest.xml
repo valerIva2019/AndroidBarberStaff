@@ -9,8 +9,19 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
-        <activity android:name=".StaffHomeActivity"></activity>
+        android:theme="@style/AppTheme"
+        tools:ignore="GoogleAppIndexingWarning">
+        <activity android:name=".NotificationActivity"></activity>
+
+        <service
+            android:name=".Service.MyFCMService"
+            tools:ignore="InnerclassSeparator">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <activity android:name=".StaffHomeActivity" />
         <activity android:name=".SalonListActivity" />
         <activity android:name=".MainActivity">
             <intent-filter>
