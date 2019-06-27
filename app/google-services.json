@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "711008175818-t250p3i0ubsjhuurrd749k3ign679pul.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "ydkim2110.com.androidbarberbooking",
+            "certificate_hash": "2b8d1e43095b52001089a1c200030e551ae092d6"
+          }
+        },
+        {
           "client_id": "711008175818-tm6a5m57or9nkpnknga5pk913trmpcm9.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
@@ -51,6 +59,14 @@
         }
       },
       "oauth_client": [
+        {
+          "client_id": "711008175818-3ueuarb5jiklorchtphbbh404gt040kp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "ydkim2110.com.androidbarberstaffapp",
+            "certificate_hash": "2b8d1e43095b52001089a1c200030e551ae092d6"
+          }
+        },
         {
           "client_id": "711008175818-srfbfgvl0gkh01s2bsmih9psb5b84v41.apps.googleusercontent.com",
           "client_type": 1,

@@ -19,7 +19,7 @@ import ydkim2110.com.androidbarberstaffapp.Common.Common;
 import ydkim2110.com.androidbarberstaffapp.Common.SpacesItemDecoration;
 import ydkim2110.com.androidbarberstaffapp.Interface.INotificationCountListener;
 import ydkim2110.com.androidbarberstaffapp.Interface.ITimeSlotLoadListener;
-import ydkim2110.com.androidbarberstaffapp.Model.TimeSlot;
+import ydkim2110.com.androidbarberstaffapp.Model.BookingInfomation;
 
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -254,9 +254,9 @@ public class StaffHomeActivity extends AppCompatActivity implements ITimeSlotLoa
                                     if (querySnapshot.isEmpty()) {
                                         mITimeSlotLoadListener.onTimeSlotLoadEmpty();
                                     } else {
-                                        List<TimeSlot> timeSlots = new ArrayList<>();
+                                        List<BookingInfomation> timeSlots = new ArrayList<>();
                                         for (QueryDocumentSnapshot document : task.getResult()) {
-                                            timeSlots.add(document.toObject(TimeSlot.class));
+                                            timeSlots.add(document.toObject(BookingInfomation.class));
                                         }
                                         mITimeSlotLoadListener.onTimeSlotLoadSuccess(timeSlots);
                                     }
@@ -383,7 +383,7 @@ public class StaffHomeActivity extends AppCompatActivity implements ITimeSlotLoa
     }
 
     @Override
-    public void onTimeSlotLoadSuccess(List<TimeSlot> timeSlotList) {
+    public void onTimeSlotLoadSuccess(List<BookingInfomation> timeSlotList) {
         Log.d(TAG, "onTimeSlotLoadSuccess: called!!");
         MyTimeSlotAdapter adapter = new MyTimeSlotAdapter(this, timeSlotList);
         recycler_time_slot.setAdapter(adapter);

@@ -16,6 +16,7 @@ import ydkim2110.com.androidbarberstaffapp.Model.Barber;
 import ydkim2110.com.androidbarberstaffapp.Model.City;
 import ydkim2110.com.androidbarberstaffapp.Model.Salon;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -35,6 +36,11 @@ import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.karumi.dexter.Dexter;
+import com.karumi.dexter.MultiplePermissionsReport;
+import com.karumi.dexter.PermissionToken;
+import com.karumi.dexter.listener.PermissionRequest;
+import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,59 +60,75 @@ public class MainActivity extends AppCompatActivity implements IOnAllStateLoadLi
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "onCreate: called!!");
 
-        FirebaseInstanceId.getInstance()
-                .getInstanceId()
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Toast.makeText(MainActivity.this, ""+e.getMessage(), Toast.LENGTH_SHORT).show();
-                    }
+        Dexter.withActivity(this)
+                .withPermissions(new String[]{
+                        Manifest.permission.CAMERA,
+                        Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE
                 })
-                .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+                .withListener(new MultiplePermissionsListener() {
                     @Override
-                    public void onComplete(@NonNull Task<InstanceIdResult> task) {
-                        if (task.isSuccessful()) {
-                            Common.updateToken(MainActivity.this, task.getResult().getToken());
-                            Log.d(TAG, "onComplete: TOKEN: "+task.getResult().getToken());
+                    public void onPermissionsChecked(MultiplePermissionsReport report) {
+                        FirebaseInstanceId.getInstance()
+                                .getInstanceId()
+                                .addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        Toast.makeText(MainActivity.this, ""+e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    }
+                                })
+                                .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<InstanceIdResult> task) {
+                                        if (task.isSuccessful()) {
+                                            Common.updateToken(MainActivity.this, task.getResult().getToken());
+                                            Log.d(TAG, "onComplete: TOKEN: "+task.getResult().getToken());
+                                        }
+                                    }
+                                });
+
+                        Paper.init(MainActivity.this);
+                        String user = Paper.book().read(Common.LOGGED_KEY);
+
+                        // If user not login before
+                        if (TextUtils.isEmpty(user)) {
+                            setContentView(R.layout.activity_main);
+                            Log.d(TAG, "onCreate: started!!");
+                            ButterKnife.bind(MainActivity.this);
+
+                            initView();
+                            init();
+                            loadAllStateFromFirestore();
+                        }
+                        else { // If User already login
+                            Gson gson = new Gson();
+                            Common.state_name = Paper.book().read(Common.STATE_KEY);
+                            Common.selected_salon = gson.fromJson(Paper.book().read(Common.SALON_KEY, ""),
+                                    new TypeToken<Salon>(){}.getType());
+                            Common.currentBarber = gson.fromJson(Paper.book().read(Common.BARBER_KEY, ""),
+                                    new TypeToken<Barber>(){}.getType());
+
+                            Intent intent = new Intent(MainActivity.this, StaffHomeActivity.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(intent);
+                            finish();
                         }
                     }
-                });
 
-        Paper.init(this);
-        String user = Paper.book().read(Common.LOGGED_KEY);
+                    @Override
+                    public void onPermissionRationaleShouldBeShown(List<PermissionRequest> permissions, PermissionToken token) {
 
-        // If user not login before
-        if (TextUtils.isEmpty(user)) {
-            setContentView(R.layout.activity_main);
-            Log.d(TAG, "onCreate: started!!");
-            ButterKnife.bind(this);
-
-            initView();
-            init();
-            loadAllStateFromFirestore();
-        }
-        else { // If User already login
-            Gson gson = new Gson();
-            Common.state_name = Paper.book().read(Common.STATE_KEY);
-            Common.selected_salon = gson.fromJson(Paper.book().read(Common.SALON_KEY, ""),
-                    new TypeToken<Salon>(){}.getType());
-            Common.currentBarber = gson.fromJson(Paper.book().read(Common.BARBER_KEY, ""),
-                    new TypeToken<Barber>(){}.getType());
-
-            Intent intent = new Intent(this, StaffHomeActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
-            finish();
-        }
-
+                    }
+                })
+                .check();
 
     }
 
     private void loadAllStateFromFirestore() {
         Log.d(TAG, "loadAllStateFromFirestore: called!!");
-
         mDialog.show();
 
         allSalonCollection.get()
