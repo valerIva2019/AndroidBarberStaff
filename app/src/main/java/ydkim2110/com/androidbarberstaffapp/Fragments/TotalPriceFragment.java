@@ -1,5 +1,6 @@
 package ydkim2110.com.androidbarberstaffapp.Fragments;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.os.Bundle;
 import android.util.Log;
@@ -7,29 +8,48 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
 import dmax.dialog.SpotsDialog;
-import retrofit2.Retrofit;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
 import ydkim2110.com.androidbarberstaffapp.Adapter.MyConfirmShoppingItemAdapter;
 import ydkim2110.com.androidbarberstaffapp.Common.Common;
+import ydkim2110.com.androidbarberstaffapp.Interface.IBottomSheetDialogOnDismissListenr;
 import ydkim2110.com.androidbarberstaffapp.Model.BarberServices;
+import ydkim2110.com.androidbarberstaffapp.Model.FCMResponse;
+import ydkim2110.com.androidbarberstaffapp.Model.FCMSendData;
+import ydkim2110.com.androidbarberstaffapp.Model.Invoice;
+import ydkim2110.com.androidbarberstaffapp.Model.MyToken;
 import ydkim2110.com.androidbarberstaffapp.Model.ShoppingItem;
 import ydkim2110.com.androidbarberstaffapp.R;
 import ydkim2110.com.androidbarberstaffapp.Retrofit.IFCMService;
@@ -64,11 +84,18 @@ public class TotalPriceFragment extends BottomSheetDialogFragment {
     private List<ShoppingItem> mShoppingItemList;
     private IFCMService mIFCMService;
     private AlertDialog mDialog;
+    private String image_url;
+
+    private IBottomSheetDialogOnDismissListenr mIBottomSheetDialogOnDismissListenr;
 
     private static TotalPriceFragment instance;
 
-    public static TotalPriceFragment getInstance() {
-        return instance == null ? new TotalPriceFragment() : instance;
+    public TotalPriceFragment(IBottomSheetDialogOnDismissListenr iBottomSheetDialogOnDismissListenr) {
+        this.mIBottomSheetDialogOnDismissListenr = iBottomSheetDialogOnDismissListenr;
+    }
+
+    public static TotalPriceFragment getInstance(IBottomSheetDialogOnDismissListenr iBottomSheetDialogOnDismissListenr) {
+        return instance == null ? new TotalPriceFragment(iBottomSheetDialogOnDismissListenr) : instance;
     }
 
     @Override
@@ -84,14 +111,14 @@ public class TotalPriceFragment extends BottomSheetDialogFragment {
         View view = inflater.inflate(R.layout.fragment_total_price, container, false);
 
         mUnbinder = ButterKnife.bind(this, view);
-        
+
         init();
         initView();
-        
+
         getBundle(getArguments());
 
         setInformation();
-        
+
         return view;
     }
 
@@ -105,7 +132,7 @@ public class TotalPriceFragment extends BottomSheetDialogFragment {
 
         if (mServicesAdded.size() > 0) {
             // Add to Chip Group
-            int i=0;
+            int i = 0;
             for (BarberServices services : mServicesAdded) {
                 Chip chip = (Chip) getLayoutInflater().inflate(R.layout.chip_item, null);
                 chip.setText(services.getName());
@@ -115,7 +142,7 @@ public class TotalPriceFragment extends BottomSheetDialogFragment {
                     public void onClick(View v) {
                         mServicesAdded.remove(v.getTag());
                         chip_group_services.removeView(v);
-                        
+
                         calculatePrice();
                     }
                 });
@@ -135,7 +162,7 @@ public class TotalPriceFragment extends BottomSheetDialogFragment {
 
     }
 
-    private void calculatePrice() {
+    private double calculatePrice() {
         Log.d(TAG, "calculatePrice: called!!");
         double price = Common.DEFAULT_PRICE;
         for (BarberServices services : mServicesAdded) {
@@ -145,23 +172,180 @@ public class TotalPriceFragment extends BottomSheetDialogFragment {
             price += shoppingItem.getPrice();
         }
         txt_total_price.setText(new StringBuilder(Common.MONEY_SIGN).append(price));
+
+        return price;
     }
 
     private void getBundle(Bundle arguments) {
         Log.d(TAG, "getBundle: called!!");
         this.mServicesAdded = new Gson()
                 .fromJson(arguments.getString(Common.SERVICES_ADDED),
-                        new TypeToken<HashSet<BarberServices>>(){}.getType());
+                        new TypeToken<HashSet<BarberServices>>() {
+                        }.getType());
 
         this.mShoppingItemList = new Gson()
                 .fromJson(arguments.getString(Common.SHOPPING_LIST),
-                        new TypeToken<List<ShoppingItem>>(){}.getType());
+                        new TypeToken<List<ShoppingItem>>() {
+                        }.getType());
+
+        image_url = arguments.getString(Common.IMAGE_DOWNLOADABLE_URL);
     }
 
     private void initView() {
         Log.d(TAG, "initView: called!");
         recycler_view_shopping.setHasFixedSize(true);
         recycler_view_shopping.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+
+        btn_confirm.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mDialog.show();
+
+                // Update bookingInformation, set done = true
+                DocumentReference bookingSet = FirebaseFirestore.getInstance()
+                        .collection("AllSalon")
+                        .document(Common.state_name)
+                        .collection("Branch")
+                        .document(Common.selected_salon.getSalonId())
+                        .collection("Barber")
+                        .document(Common.currentBarber.getBarberId())
+                        .collection(Common.simpleDateFormat.format(Common.bookingDate.getTime()))
+                        .document(Common.currentBookingInformation.getBookingId());
+
+                bookingSet.get()
+                        .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                            @Override
+                            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                                if (task.isSuccessful()) {
+                                    if (task.getResult().exists()) {
+                                        // Update
+                                        Map<String, Object> dataUpdate = new HashMap<>();
+                                        dataUpdate.put("done", true);
+                                        bookingSet.update(dataUpdate)
+                                                .addOnFailureListener(new OnFailureListener() {
+                                                    @Override
+                                                    public void onFailure(@NonNull Exception e) {
+                                                        mDialog.dismiss();
+                                                        Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                                                    }
+                                                })
+                                                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                    @Override
+                                                    public void onComplete(@NonNull Task<Void> task) {
+                                                        if (task.isSuccessful()) {
+                                                            // if update is done, create invoice
+                                                            createInvoice();
+                                                        }
+                                                    }
+                                                });
+                                    }
+                                }
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                mDialog.dismiss();
+                                Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                            }
+                        });
+            }
+        });
+    }
+
+    private void createInvoice() {
+        Log.d(TAG, "createInvoice: called!!");
+        mDialog.dismiss();
+        //Create invoice
+        CollectionReference invoiceRef = FirebaseFirestore.getInstance()
+                .collection("AllSalon")
+                .document(Common.state_name)
+                .collection("Branch")
+                .document(Common.selected_salon.getSalonId())
+                .collection("Invoices");
+
+        Invoice invoice = new Invoice();
+        invoice.setBarberId(Common.currentBarber.getBarberId());
+        invoice.setBarberName(Common.currentBarber.getName());
+
+        invoice.setSalonId(Common.selected_salon.getSalonId());
+        invoice.setSalonName(Common.selected_salon.getName());
+        invoice.setSalonAddress(Common.selected_salon.getAddress());
+
+        invoice.setCustomerName(Common.currentBookingInformation.getCustomerName());
+        invoice.setCustomerPhone(Common.currentBookingInformation.getCustomerPhone());
+
+        invoice.setImageUri(image_url);
+
+        invoice.setBarberServices(new ArrayList<BarberServices>(mServicesAdded));
+        invoice.setShoppingItemList(mShoppingItemList);
+        invoice.setFinalPrice(calculatePrice());
+
+        invoiceRef.document()
+                .set(invoice)
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()) {
+                            sendNotificationUpdateToUser(Common.currentBookingInformation.getCustomerPhone());
+                        }
+                    }
+                });
+
+    }
+
+    private void sendNotificationUpdateToUser(String customerPhone) {
+        Log.d(TAG, "sendNotificationUpdateToUser: called!!");
+        // Get Token of user first
+        FirebaseFirestore.getInstance()
+                .collection("Tokens")
+                .whereEqualTo("userPhone", customerPhone)
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @SuppressLint("CheckResult")
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                        if (task.isSuccessful() && task.getResult().size() > 0) {
+                            MyToken myToken = new MyToken();
+                            for (DocumentSnapshot tokenSnapshot : task.getResult()) {
+                                myToken = tokenSnapshot.toObject(MyToken.class);
+                            }
+
+                            // Create notification to send
+                            FCMSendData fcmSendData = new FCMSendData();
+                            Map<String, String> dataSend = new HashMap<>();
+                            dataSend.put("update_done", "true");
+
+                            fcmSendData.setTo(myToken.getToken());
+                            fcmSendData.setData(dataSend);
+
+                            mIFCMService.sendNotification(fcmSendData)
+                                    .subscribeOn(Schedulers.io())
+                                    .observeOn(Schedulers.newThread())
+                                    .subscribe(new Consumer<FCMResponse>() {
+                                        @Override
+                                        public void accept(FCMResponse fcmResponse) throws Exception {
+                                            mDialog.dismiss();
+                                            dismiss();
+                                            mIBottomSheetDialogOnDismissListenr.onDismissBottomSheetDialog(true);
+                                        }
+                                    }, new Consumer<Throwable>() {
+                                        @Override
+                                        public void accept(Throwable throwable) throws Exception {
+                                            Toast.makeText(getContext(), throwable.getMessage(), Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                        }
+                    }
+                });
+
+
     }
 
     private void init() {

@@ -39,6 +39,7 @@ public class Common {
     public static final double DEFAULT_PRICE = 30;
     public static final String MONEY_SIGN = "$";
     public static final String SHOPPING_LIST = "SHOPPING_LIST_ITEMS";
+    public static final String IMAGE_DOWNLOADABLE_URL = "DOWNLOADABLE_URL";
     private static final String TAG = Common.class.getSimpleName();
 
     public static final Object DISABLE_TAG = "DISABLE";

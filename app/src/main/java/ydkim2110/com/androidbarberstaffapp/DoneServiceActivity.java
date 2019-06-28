@@ -23,7 +23,9 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
+import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -60,11 +62,12 @@ import ydkim2110.com.androidbarberstaffapp.Common.Common;
 import ydkim2110.com.androidbarberstaffapp.Fragments.ShoppingFragment;
 import ydkim2110.com.androidbarberstaffapp.Fragments.TotalPriceFragment;
 import ydkim2110.com.androidbarberstaffapp.Interface.IBarberServicesLoadListener;
+import ydkim2110.com.androidbarberstaffapp.Interface.IBottomSheetDialogOnDismissListenr;
 import ydkim2110.com.androidbarberstaffapp.Interface.IOnShoppingItemSelected;
 import ydkim2110.com.androidbarberstaffapp.Model.BarberServices;
 import ydkim2110.com.androidbarberstaffapp.Model.ShoppingItem;
 
-public class DoneServiceActivity extends AppCompatActivity implements IBarberServicesLoadListener, IOnShoppingItemSelected {
+public class DoneServiceActivity extends AppCompatActivity implements IBarberServicesLoadListener, IOnShoppingItemSelected, IBottomSheetDialogOnDismissListenr {
 
     private static final String TAG = DoneServiceActivity.class.getSimpleName();
     private static final int MY_CAMERA_REQUEST_CODE = 1000;
@@ -85,6 +88,10 @@ public class DoneServiceActivity extends AppCompatActivity implements IBarberSer
     ImageView add_shopping;
     @BindView(R.id.btn_finish)
     Button btn_finish;
+    @BindView(R.id.rdi_no_picture)
+    RadioButton rdi_no_picture;
+    @BindView(R.id.rdi_picture)
+    RadioButton rdi_picture;
 
 
     private AlertDialog mDialog;
@@ -119,10 +126,41 @@ public class DoneServiceActivity extends AppCompatActivity implements IBarberSer
         Log.d(TAG, "initView: called");
         getSupportActionBar().setTitle("Checkout");
 
+        rdi_no_picture.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    img_customer_hair.setVisibility(View.VISIBLE);
+                    btn_finish.setEnabled(false);
+                }
+            }
+        });
+
+        rdi_no_picture.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    img_customer_hair.setVisibility(View.GONE);
+                    btn_finish.setEnabled(true);
+                }
+            }
+        });
+
         btn_finish.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                uploadPicture(fileUri);
+                if (rdi_no_picture.isChecked()) {
+                    mDialog.dismiss();
+
+                    TotalPriceFragment fragment = TotalPriceFragment.getInstance(DoneServiceActivity.this);
+                    Bundle bundle = new Bundle();
+                    bundle.putString(Common.SERVICES_ADDED, new Gson().toJson(mServicesAdded));
+                    bundle.putString(Common.SHOPPING_LIST, new Gson().toJson(mShoppingItems));
+                    fragment.setArguments(bundle);
+                    fragment.show(getSupportFragmentManager(), "Price");
+                } else {
+                    uploadPicture(fileUri);
+                }
             }
         });
 
@@ -177,14 +215,15 @@ public class DoneServiceActivity extends AppCompatActivity implements IBarberSer
                     if (task.isSuccessful()) {
                         String url = task.getResult().toString()
                                 .substring(0, task.getResult().toString().indexOf("&token"));
-                        Log.d(TAG, "onComplete: Download Link: "+url);
+                        Log.d(TAG, "onComplete: Download Link: " + url);
 
                         mDialog.dismiss();
 
-                        TotalPriceFragment fragment = TotalPriceFragment.getInstance();
+                        TotalPriceFragment fragment = TotalPriceFragment.getInstance(DoneServiceActivity.this);
                         Bundle bundle = new Bundle();
                         bundle.putString(Common.SERVICES_ADDED, new Gson().toJson(mServicesAdded));
                         bundle.putString(Common.SHOPPING_LIST, new Gson().toJson(mShoppingItems));
+                        bundle.putString(Common.IMAGE_DOWNLOADABLE_URL, url);
                         fragment.setArguments(bundle);
                         fragment.show(getSupportFragmentManager(), "Price");
 
@@ -198,8 +237,7 @@ public class DoneServiceActivity extends AppCompatActivity implements IBarberSer
                 }
             });
 
-        }
-        else {
+        } else {
             Toast.makeText(this, "Image is empty", Toast.LENGTH_SHORT).show();
         }
     }
@@ -273,10 +311,10 @@ public class DoneServiceActivity extends AppCompatActivity implements IBarberSer
                     btn_finish.setEnabled(true);
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
-                    Log.d(TAG, "onActivityResult: error: "+e.getMessage());
+                    Log.d(TAG, "onActivityResult: error: " + e.getMessage());
                 } catch (IOException e) {
                     e.printStackTrace();
-                    Log.d(TAG, "onActivityResult: error: "+e.getMessage());
+                    Log.d(TAG, "onActivityResult: error: " + e.getMessage());
                 }
 
             }
@@ -410,5 +448,12 @@ public class DoneServiceActivity extends AppCompatActivity implements IBarberSer
         });
 
         chip_group_shopping.addView(item);
+    }
+
+    @Override
+    public void onDismissBottomSheetDialog(boolean fromButton) {
+        Log.d(TAG, "onDismissBottomSheetDialog: called!!");
+        if (fromButton)
+            finish();
     }
 }
