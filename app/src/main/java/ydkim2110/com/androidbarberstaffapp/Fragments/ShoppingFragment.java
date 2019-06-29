@@ -33,20 +33,19 @@ import butterknife.Unbinder;
 import dmax.dialog.SpotsDialog;
 import ydkim2110.com.androidbarberstaffapp.Adapter.MyShoppingItemAdapter;
 import ydkim2110.com.androidbarberstaffapp.Common.SpacesItemDecoration;
-import ydkim2110.com.androidbarberstaffapp.DoneServiceActivity;
 import ydkim2110.com.androidbarberstaffapp.Interface.IOnShoppingItemSelected;
-import ydkim2110.com.androidbarberstaffapp.Interface.mIShoppingDataLoadListener;
+import ydkim2110.com.androidbarberstaffapp.Interface.IShoppingDataLoadListener;
 import ydkim2110.com.androidbarberstaffapp.Model.ShoppingItem;
 import ydkim2110.com.androidbarberstaffapp.R;
 
-public class ShoppingFragment extends BottomSheetDialogFragment implements ydkim2110.com.androidbarberstaffapp.Interface.mIShoppingDataLoadListener, IOnShoppingItemSelected {
+public class ShoppingFragment extends BottomSheetDialogFragment implements IShoppingDataLoadListener, IOnShoppingItemSelected {
 
     private static final String TAG = ShoppingFragment.class.getSimpleName();
 
     private Unbinder mUnbinder;
 
     private IOnShoppingItemSelected callBackToActivity;
-    private mIShoppingDataLoadListener mIShoppingDataLoadListener;
+    private IShoppingDataLoadListener mIShoppingDataLoadListener;
 
     private AlertDialog mDialog;
     private CollectionReference shoppingItemRef;

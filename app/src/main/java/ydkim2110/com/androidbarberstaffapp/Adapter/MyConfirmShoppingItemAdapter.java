@@ -16,6 +16,7 @@ import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import ydkim2110.com.androidbarberstaffapp.Model.CartItem;
 import ydkim2110.com.androidbarberstaffapp.Model.ShoppingItem;
 import ydkim2110.com.androidbarberstaffapp.R;
 
@@ -24,9 +25,9 @@ public class MyConfirmShoppingItemAdapter extends RecyclerView.Adapter<MyConfirm
     private static final String TAG = MyConfirmShoppingItemAdapter.class.getSimpleName();
 
     private Context mContext;
-    private List<ShoppingItem> mShoppingItemList;
+    private List<CartItem> mShoppingItemList;
 
-    public MyConfirmShoppingItemAdapter(Context context, List<ShoppingItem> shoppingItemList) {
+    public MyConfirmShoppingItemAdapter(Context context, List<CartItem> shoppingItemList) {
         mContext = context;
         mShoppingItemList = shoppingItemList;
     }
@@ -42,9 +43,11 @@ public class MyConfirmShoppingItemAdapter extends RecyclerView.Adapter<MyConfirm
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
         Picasso.get()
-                .load(mShoppingItemList.get(position).getImage())
+                .load(mShoppingItemList.get(position).getProductImage())
                 .into(holder.item_image);
-        holder.txt_name.setText(mShoppingItemList.get(position).getName());
+        holder.txt_name.setText(new StringBuilder(mShoppingItemList.get(position).getProductName())
+                .append(" x")
+                .append(mShoppingItemList.get(position).getProductQuantity()));
     }
 
     @Override
@@ -52,7 +55,7 @@ public class MyConfirmShoppingItemAdapter extends RecyclerView.Adapter<MyConfirm
         return mShoppingItemList.size();
     }
 
-    public class MyViewHolder extends RecyclerView.ViewHolder{
+    public class MyViewHolder extends RecyclerView.ViewHolder {
 
         @BindView(R.id.item_image)
         ImageView item_image;

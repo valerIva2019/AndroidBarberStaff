@@ -61,7 +61,8 @@ public class MyTimeSlotAdapter extends RecyclerView.Adapter<MyTimeSlotAdapter.My
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
         holder.txt_time_slot.setText(new StringBuilder(Common.convertTimeSlotToString(position)).toString());
-        if (mTimeSlotList.size() == 0) { // If all position is availabe, just show list
+        // If all position is available, just show list
+        if (mTimeSlotList.size() == 0) {
             holder.card_time_slot.setCardBackgroundColor(mContext.getResources().getColor(android.R.color.white));
             holder.txt_time_slot_description.setText("Available");
             holder.txt_time_slot_description.setTextColor(mContext.getResources().getColor(android.R.color.black));
@@ -74,7 +75,8 @@ public class MyTimeSlotAdapter extends RecyclerView.Adapter<MyTimeSlotAdapter.My
                     // Fix crash if we not add this function
                 }
             });
-        } else { // If have position is full (booked)
+        // If have position is full (booked)
+        } else {
             for (BookingInfomation slotValue : mTimeSlotList) {
                 // Loop all time slot from server and set different color
                 int slot = Integer.parseInt(slotValue.getSlot().toString());

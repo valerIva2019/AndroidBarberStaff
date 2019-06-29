@@ -4,7 +4,7 @@ import java.util.List;
 
 import ydkim2110.com.androidbarberstaffapp.Model.ShoppingItem;
 
-public interface mIShoppingDataLoadListener {
+public interface IShoppingDataLoadListener {
     void onShoppingDataLoadSuccess(List<ShoppingItem> shoppingItemList);
     void onShoppingDataLoadFailed(String message);
 }
